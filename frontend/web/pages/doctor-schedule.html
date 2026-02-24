@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOU Marche - Agenda Medico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+        }
+        .main-content {
+            padding: 30px;
+        }
+        .schedule-header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .doctor-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .doctor-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        .stat-icon {
+            font-size: 2rem;
+            color: #667eea;
+        }
+        .appointment-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+        .appointment-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .appointment-card.televisita {
+            border-left-color: #28a745;
+        }
+        .appointment-card.emergenza {
+            border-left-color: #dc3545;
+        }
+        .time-slot {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+        .btn-schedule {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }
+        .btn-schedule:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+        #calendar {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <h4 class="mb-4"><i class="fas fa-hospital me-2"></i>AOU Marche</h4>
+                <p class="text-white-50">Dr. Mario Rossi</p>
+                <p class="text-white-50 small mb-4">Cardiologia - Lancisi</p>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="doctor-dashboard.html">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a class="nav-link active" href="doctor-schedule.html">
+                        <i class="fas fa-calendar-alt me-2"></i>Agenda
+                    </a>
+                    <a class="nav-link" href="patient-history.html">
+                        <i class="fas fa-notes-medical me-2"></i>Pazienti
+                    </a>
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-chart-line me-2"></i>Statistiche
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                <!-- Doctor Info -->
+                <div class="schedule-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="doctor-info">
+                                <div class="doctor-avatar">
+                                    <i class="fas fa-user-md"></i>
+                                </div>
+                                <div>
+                                    <h4 class="mb-1">Dr. Mario Rossi</h4>
+                                    <p class="text-muted mb-0">Cardiologia - Ospedale Lancisi</p>
+                                    <p class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>Ancona, Italy</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-schedule me-2" onclick="showNewAppointmentModal()">
+                                <i class="fas fa-plus me-2"></i>Nuova Visita
+                            </button>
+                            <button class="btn btn-outline-primary">
+                                <i class="fas fa-sync-alt me-2"></i>Sincronizza
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-muted mb-1">Visite Oggi</p>
+                                    <h3 id="todayCount">8</h3>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-muted mb-1">Completate</p>
+                                    <h3 id="completedCount">4</h3>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-muted mb-1">In Attesa</p>
+                                    <h3 id="pendingCount">3</h3>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-clock text-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-muted mb-1">Prossima</p>
+                                    <h3 id="nextAppointment">10:30</h3>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-hourglass-half text-info"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Calendar and Schedule -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <div id="calendar"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-card">
+                            <h5 class="mb-3"><i class="fas fa-list me-2 text-primary"></i>Prossime Visite</h5>
+                            <div id="upcomingAppointments">
+                                <!-- Appointments will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- New Appointment Modal -->
+    <div class="modal fade" id="newAppointmentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuova Visita</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="appointmentForm">
+                        <div class="mb-3">
+                            <label class="form-label">Paziente</label>
+                            <select class="form-select" id="patientSelect">
+                                <option value="">Seleziona paziente...</option>
+                                <option value="1">Mario Rossi</option>
+                                <option value="2">Giuseppe Verdi</option>
+                                <option value="3">Anna Bianchi</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo Visita</label>
+                            <select class="form-select" id="visitType">
+                                <option value="televisita">Televisita</option>
+                                <option value="ambulatoriale">Visita Ambulatoriale</option>
+                                <option value="controllo">Visita di Controllo</option>
+                                <option value="emergenza">Emergenza</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data</label>
+                                <input type="date" class="form-control" id="appointmentDate">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Ora</label>
+                                <input type="time" class="form-control" id="appointmentTime">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Durata (minuti)</label>
+                            <select class="form-select" id="duration">
+                                <option value="15">15 min</option>
+                                <option value="30" selected>30 min</option>
+                                <option value="45">45 min</option>
+                                <option value="60">60 min</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Note</label>
+                            <textarea class="form-control" id="appointmentNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                    <button type="button" class="btn btn-primary" onclick="scheduleAppointment()">Programma</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/it.js"></script>
+    
+    <script>
+        let calendar;
+        let appointments = [
+            {
+                id: 1,
+                title: 'Mario Rossi - Televisita',
+                start: new Date(new Date().setHours(10, 30, 0)).toISOString(),
+                end: new Date(new Date().setHours(11, 0, 0)).toISOString(),
+                type: 'televisita',
+                patient: 'Mario Rossi'
+            },
+            {
+                id: 2,
+                title: 'Giuseppe Verdi - Controllo',
+                start: new Date(new Date().setHours(11, 30, 0)).toISOString(),
+                end: new Date(new Date().setHours(12, 0, 0)).toISOString(),
+                type: 'controllo',
+                patient: 'Giuseppe Verdi'
+            },
+            {
+                id: 3,
+                title: 'Anna Bianchi - Visita',
+                start: new Date(new Date().setHours(14, 0, 0)).toISOString(),
+                end: new Date(new Date().setHours(14, 30, 0)).toISOString(),
+                type: 'ambulatoriale',
+                patient: 'Anna Bianchi'
+            }
+        ];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                locale: 'it',
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                slotMinTime: '08:00:00',
+                slotMaxTime: '20:00:00',
+                allDaySlot: false,
+                slotDuration: '00:30:00',
+                events: appointments,
+                eventClick: function(info) {
+                    showAppointmentDetails(info.event);
+                }
+            });
+            calendar.render();
+            
+            updateUpcomingAppointments();
+        });
+        
+        function updateUpcomingAppointments() {
+            const container = document.getElementById('upcomingAppointments');
+            let html = '';
+            
+            const now = new Date();
+            const upcoming = appointments
+                .filter(a => new Date(a.start) > now)
+                .sort((a, b) => new Date(a.start) - new Date(b.start))
+                .slice(0, 5);
+            
+            upcoming.forEach(apt => {
+                const startTime = new Date(apt.start).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                html += `
+                    <div class="appointment-card">
+                        <div class="d-flex justify-content-between">
+                            <span class="time-slot">${startTime}</span>
+                            <span class="badge bg-${apt.type === 'televisita' ? 'success' : apt.type === 'emergenza' ? 'danger' : 'primary'}">
+                                ${apt.type}
+                            </span>
+                        </div>
+                        <h6 class="mb-1">${apt.title}</h6>
+                        <p class="text-muted small mb-2">${apt.patient}</p>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="startVideoCall('${apt.id}')">
+                                <i class="fas fa-video"></i> Avvia
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="viewDetails('${apt.id}')">
+                                <i class="fas fa-info-circle"></i> Dettagli
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (upcoming.length === 0) {
+                html = '<p class="text-muted text-center py-3">Nessuna visita programmata</p>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function showNewAppointmentModal() {
+            const modal = new bootstrap.Modal(document.getElementById('newAppointmentModal'));
+            modal.show();
+        }
+        
+        function scheduleAppointment() {
+            const patient = document.getElementById('patientSelect').value;
+            const type = document.getElementById('visitType').value;
+            const date = document.getElementById('appointmentDate').value;
+            const time = document.getElementById('appointmentTime').value;
+            
+            if (!patient || !date || !time) {
+                alert('Compila tutti i campi obbligatori');
+                return;
+            }
+            
+            const startDateTime = new Date(`${date}T${time}`);
+            const endDateTime = new Date(startDateTime.getTime() + 30 * 60000);
+            
+            const newAppointment = {
+                id: appointments.length + 1,
+                title: `${document.getElementById('patientSelect').options[document.getElementById('patientSelect').selectedIndex].text} - ${type}`,
+                start: startDateTime.toISOString(),
+                end: endDateTime.toISOString(),
+                type: type,
+                patient: document.getElementById('patientSelect').options[document.getElementById('patientSelect').selectedIndex].text
+            };
+            
+            appointments.push(newAppointment);
+            calendar.addEvent(newAppointment);
+            updateUpcomingAppointments();
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('newAppointmentModal')).hide();
+            
+            // Show success message
+            alert('Visita programmata con successo!');
+        }
+        
+        function showAppointmentDetails(event) {
+            alert(`
+                Dettagli Visita:
+                Paziente: ${event.title}
+                Inizio: ${event.start.toLocaleString('it-IT')}
+                Fine: ${event.end.toLocaleString('it-IT')}
+            `);
+        }
+        
+        function startVideoCall(appointmentId) {
+            alert('Avvio televisita... (funzionalità in sviluppo)');
+        }
+        
+        function viewDetails(appointmentId) {
+            const appointment = appointments.find(a => a.id == appointmentId);
+            if (appointment) {
+                showAppointmentDetails({ title: appointment.title, start: new Date(appointment.start), end: new Date(appointment.end) });
+            }
+        }
+    </script>
+</body>
+</html>

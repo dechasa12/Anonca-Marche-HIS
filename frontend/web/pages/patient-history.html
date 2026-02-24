@@ -1,0 +1,561 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOU Marche - Storico Paziente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+        .main-content {
+            padding: 30px;
+        }
+        .patient-header {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .patient-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+        }
+        .info-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .vital-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .vital-card:hover {
+            transform: translateY(-5px);
+        }
+        .vital-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e0e0e0;
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 30px;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: 12px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .timeline-content {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .badge-diagnosi {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .badge-farmaco {
+            background: #e8f5e9;
+            color: #388e3c;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .search-box {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <h4 class="mb-4"><i class="fas fa-hospital me-2"></i>AOU Marche</h4>
+                <p class="text-white-50">Dr. Mario Rossi</p>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="doctor-dashboard.html">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a class="nav-link" href="doctor-schedule.html">
+                        <i class="fas fa-calendar-alt me-2"></i>Agenda
+                    </a>
+                    <a class="nav-link active" href="patient-history.html">
+                        <i class="fas fa-notes-medical me-2"></i>Pazienti
+                    </a>
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-chart-line me-2"></i>Statistiche
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                <!-- Search Bar -->
+                <div class="search-box">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0" id="patientSearch" 
+                                       placeholder="Cerca paziente per nome, cognome o codice fiscale..."
+                                       onkeyup="searchPatients()">
+                                <button class="btn btn-primary" onclick="searchPatients()">
+                                    <i class="fas fa-search me-2"></i>Cerca
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="filterDate" onchange="filterByDate()">
+                                <option value="all">Tutto lo storico</option>
+                                <option value="30">Ultimi 30 giorni</option>
+                                <option value="90">Ultimi 3 mesi</option>
+                                <option value="365">Ultimo anno</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Patient List (initially hidden) -->
+                <div id="patientList" style="display: none;">
+                    <!-- Search results will appear here -->
+                </div>
+                
+                <!-- Selected Patient History (initially hidden) -->
+                <div id="patientHistory" style="display: none;">
+                    <!-- Patient Header -->
+                    <div class="patient-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center gap-4">
+                                    <div class="patient-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="patientName">Mario Rossi</h3>
+                                        <p class="text-muted mb-1">
+                                            <i class="fas fa-id-card me-2"></i>
+                                            <span id="patientCF">RSSMRA80A01A271X</span>
+                                        </p>
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-calendar me-2"></i>
+                                            Nato il <span id="patientDOB">01/01/1980</span> (45 anni)
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-4 text-center">
+                                        <div class="badge-diagnosi">
+                                            <i class="fas fa-notes-medical me-1"></i>12 Visite
+                                        </div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <div class="badge-farmaco">
+                                            <i class="fas fa-pills me-1"></i>3 Farmaci
+                                        </div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <div class="badge-diagnosi">
+                                            <i class="fas fa-flask me-1"></i>8 Esami
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Vital Signs Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="vital-card">
+                                <i class="fas fa-heartbeat fa-2x"></i>
+                                <div class="vital-value" id="heartRate">72</div>
+                                <div>bpm</div>
+                                <small>Frequenza Cardiaca</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="vital-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                                <i class="fas fa-heart fa-2x"></i>
+                                <div class="vital-value" id="bloodPressure">120/80</div>
+                                <div>mmHg</div>
+                                <small>Pressione Arteriosa</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="vital-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                                <i class="fas fa-lungs fa-2x"></i>
+                                <div class="vital-value" id="oxygenSaturation">98%</div>
+                                <div>SpO2</div>
+                                <small>Saturazione Ossigeno</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="vital-card" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);">
+                                <i class="fas fa-weight fa-2x"></i>
+                                <div class="vital-value" id="weight">75</div>
+                                <div>kg</div>
+                                <small>Peso</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Row -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-card">
+                                <h5><i class="fas fa-chart-line me-2 text-primary"></i>Andamento Pressione</h5>
+                                <canvas id="bpChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-card">
+                                <h5><i class="fas fa-chart-line me-2 text-primary"></i>Andamento Glicemia</h5>
+                                <canvas id="glucoseChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline and Info -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="info-card">
+                                <h5 class="mb-4"><i class="fas fa-history me-2 text-primary"></i>Storico Visite</h5>
+                                <div class="timeline" id="timeline"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-card">
+                                <h5 class="mb-4"><i class="fas fa-pills me-2 text-primary"></i>Farmaci in Corso</h5>
+                                <div id="medications"></div>
+                            </div>
+                            
+                            <div class="info-card mt-3">
+                                <h5 class="mb-4"><i class="fas fa-flask me-2 text-primary"></i>Ultimi Esami</h5>
+                                <div id="labResults"></div>
+                            </div>
+                            
+                            <div class="info-card mt-3">
+                                <h5 class="mb-4"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Allergie</h5>
+                                <div id="allergies"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Sample patients database
+        const patients = [
+            { id: 1, nome: 'Mario', cognome: 'Rossi', cf: 'RSSMRA80A01A271X', dob: '1980-01-01' },
+            { id: 2, nome: 'Giuseppe', cognome: 'Verdi', cf: 'VRDGPP75B02A271Y', dob: '1975-02-02' },
+            { id: 3, nome: 'Anna', cognome: 'Bianchi', cf: 'BNCNNA85C03A271Z', dob: '1985-03-03' }
+        ];
+        
+        let bpChart, glucoseChart;
+        
+        function searchPatients() {
+            const query = document.getElementById('patientSearch').value.toLowerCase();
+            const patientList = document.getElementById('patientList');
+            const patientHistory = document.getElementById('patientHistory');
+            
+            if (query.length < 3) {
+                patientList.style.display = 'none';
+                patientHistory.style.display = 'none';
+                return;
+            }
+            
+            const results = patients.filter(p => 
+                p.nome.toLowerCase().includes(query) ||
+                p.cognome.toLowerCase().includes(query) ||
+                p.cf.toLowerCase().includes(query)
+            );
+            
+            if (results.length > 0) {
+                let html = '<div class="search-box">';
+                results.forEach(p => {
+                    html += `
+                        <div class="d-flex justify-content-between align-items-center p-3 border-bottom" 
+                             style="cursor: pointer;" onclick="loadPatientHistory(${p.id})">
+                            <div>
+                                <h6 class="mb-1">${p.nome} ${p.cognome}</h6>
+                                <small class="text-muted">${p.cf}</small>
+                            </div>
+                            <button class="btn btn-sm btn-primary">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                patientList.innerHTML = html;
+                patientList.style.display = 'block';
+                patientHistory.style.display = 'none';
+            }
+        }
+        
+        function loadPatientHistory(patientId) {
+            document.getElementById('patientList').style.display = 'none';
+            document.getElementById('patientHistory').style.display = 'block';
+            
+            // Load patient data
+            const patient = patients.find(p => p.id === patientId);
+            document.getElementById('patientName').textContent = `${patient.nome} ${patient.cognome}`;
+            document.getElementById('patientCF').textContent = patient.cf;
+            document.getElementById('patientDOB').textContent = new Date(patient.dob).toLocaleDateString('it-IT');
+            
+            // Load timeline
+            loadTimeline();
+            
+            // Load medications
+            loadMedications();
+            
+            // Load lab results
+            loadLabResults();
+            
+            // Load allergies
+            loadAllergies();
+            
+            // Initialize charts
+            initCharts();
+        }
+        
+        function loadTimeline() {
+            const timeline = document.getElementById('timeline');
+            const events = [
+                { date: '2024-02-20', type: 'visita', title: 'Visita Cardiologica', doctor: 'Dr. Bianchi', notes: 'Controllo annuale' },
+                { date: '2024-02-15', type: 'esame', title: 'Esame del Sangue', result: 'Tutti i valori nella norma' },
+                { date: '2024-02-10', type: 'farmaco', title: 'Nuova Prescrizione', drug: 'Ramipril 5mg' },
+                { date: '2024-02-01', type: 'televisita', title: 'Televisita di Controllo', doctor: 'Dr. Verdi' },
+                { date: '2024-01-25', type: 'ricovero', title: 'Ricovero', department: 'Cardiologia' }
+            ];
+            
+            let html = '';
+            events.forEach(e => {
+                const icon = e.type === 'visita' ? 'fa-user-md' :
+                            e.type === 'esame' ? 'fa-flask' :
+                            e.type === 'farmaco' ? 'fa-pills' :
+                            e.type === 'televisita' ? 'fa-video' : 'fa-hospital';
+                
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-primary">${new Date(e.date).toLocaleDateString('it-IT')}</small>
+                                <span class="badge bg-light text-dark">${e.type}</span>
+                            </div>
+                            <h6 class="mt-2"><i class="fas ${icon} me-2 text-primary"></i>${e.title}</h6>
+                            ${e.doctor ? `<p class="text-muted small mb-1">Medico: ${e.doctor}</p>` : ''}
+                            ${e.notes ? `<p class="text-muted small mb-0">${e.notes}</p>` : ''}
+                            ${e.result ? `<p class="text-muted small mb-0">${e.result}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            timeline.innerHTML = html;
+        }
+        
+        function loadMedications() {
+            const meds = [
+                { name: 'Ramipril', dosage: '5mg', frequency: '1 volta al giorno', from: '01/02/2024' },
+                { name: 'Metformina', dosage: '500mg', frequency: '2 volte al giorno', from: '15/01/2024' },
+                { name: 'Cardioaspirina', dosage: '100mg', frequency: '1 volta al giorno', from: '01/01/2024' }
+            ];
+            
+            let html = '';
+            meds.forEach(m => {
+                html += `
+                    <div class="border-bottom pb-2 mb-2">
+                        <h6 class="mb-1">${m.name} ${m.dosage}</h6>
+                        <p class="text-muted small mb-1">${m.frequency}</p>
+                        <small class="text-primary">Dal ${m.from}</small>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('medications').innerHTML = html;
+        }
+        
+        function loadLabResults() {
+            const labs = [
+                { test: 'Glicemia', value: '95 mg/dL', date: '20/02/2024', normal: '70-100' },
+                { test: 'Colesterolo', value: '180 mg/dL', date: '20/02/2024', normal: '<200' },
+                { test: 'Creatinina', value: '0.9 mg/dL', date: '20/02/2024', normal: '0.5-1.1' }
+            ];
+            
+            let html = '';
+            labs.forEach(l => {
+                html += `
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="mb-1">${l.test}</h6>
+                            <span class="badge bg-success">Normale</span>
+                        </div>
+                        <p class="mb-1"><strong>${l.value}</strong> <small class="text-muted">(normale: ${l.normal})</small></p>
+                        <small class="text-muted">${l.date}</small>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('labResults').innerHTML = html;
+        }
+        
+        function loadAllergies() {
+            const allergies = [
+                { allergen: 'Penicillina', severity: 'Alta', reaction: 'Orticaria' },
+                { allergen: 'Nichel', severity: 'Media', reaction: 'Dermatite' }
+            ];
+            
+            let html = '';
+            allergies.forEach(a => {
+                html += `
+                    <div class="border-bottom pb-2 mb-2">
+                        <h6 class="mb-1 text-danger">${a.allergen}</h6>
+                        <p class="text-muted small mb-0">Severità: ${a.severity}</p>
+                        <p class="text-muted small mb-0">Reazione: ${a.reaction}</p>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('allergies').innerHTML = html;
+        }
+        
+        function initCharts() {
+            // BP Chart
+            const bpCtx = document.getElementById('bpChart').getContext('2d');
+            bpChart = new Chart(bpCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu'],
+                    datasets: [
+                        {
+                            label: 'Sistolica',
+                            data: [130, 128, 125, 122, 120, 118],
+                            borderColor: '#667eea',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Diastolica',
+                            data: [85, 84, 82, 80, 80, 78],
+                            borderColor: '#764ba2',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Glucose Chart
+            const glucoseCtx = document.getElementById('glucoseChart').getContext('2d');
+            glucoseChart = new Chart(glucoseCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu'],
+                    datasets: [{
+                        label: 'Glicemia (mg/dL)',
+                        data: [95, 92, 88, 90, 85, 82],
+                        borderColor: '#43e97b',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function filterByDate() {
+            const filter = document.getElementById('filterDate').value;
+            alert(`Filtraggio per: ${filter === 'all' ? 'tutto' : `ultimi ${filter} giorni`}`);
+        }
+    </script>
+</body>
+</html>

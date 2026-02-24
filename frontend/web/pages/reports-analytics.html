@@ -1,0 +1,531 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOU Marche - Reports e Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+        .main-content {
+            padding: 30px;
+        }
+        .report-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .metric-badge {
+            background: #e8f5e9;
+            color: #388e3c;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .table-custom {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .table-custom thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .date-range {
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        .export-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }
+        .export-btn:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+        .insight-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .trend-up {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .trend-down {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <h4 class="mb-4"><i class="fas fa-hospital me-2"></i>AOU Marche</h4>
+                <p class="text-white-50">Dr. Mario Rossi</p>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="doctor-dashboard.html">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a class="nav-link" href="doctor-schedule.html">
+                        <i class="fas fa-calendar-alt me-2"></i>Agenda
+                    </a>
+                    <a class="nav-link" href="patient-history.html">
+                        <i class="fas fa-notes-medical me-2"></i>Pazienti
+                    </a>
+                    <a class="nav-link active" href="reports-analytics.html">
+                        <i class="fas fa-chart-line me-2"></i>Analytics
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-chart-pie me-2 text-primary"></i>Reports e Analytics</h2>
+                    <div>
+                        <select class="form-select date-range" id="dateRange">
+                            <option value="7">Ultimi 7 giorni</option>
+                            <option value="30" selected>Ultimi 30 giorni</option>
+                            <option value="90">Ultimi 3 mesi</option>
+                            <option value="365">Ultimo anno</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- KPI Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="stat-label">Visite Totali</p>
+                                    <span class="stat-number" id="totalVisits">1,247</span>
+                                </div>
+                                <i class="fas fa-calendar-check fa-3x" style="color: #667eea;"></i>
+                            </div>
+                            <div class="mt-2">
+                                <span class="trend-up">↑ 12%</span> rispetto al mese scorso
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="stat-label">Televisite</p>
+                                    <span class="stat-number" id="telemedicineVisits">458</span>
+                                </div>
+                                <i class="fas fa-video fa-3x" style="color: #43e97b;"></i>
+                            </div>
+                            <div class="mt-2">
+                                <span class="trend-up">↑ 24%</span> vs mese scorso
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="stat-label">Emergenze</p>
+                                    <span class="stat-number" id="emergencies">89</span>
+                                </div>
+                                <i class="fas fa-ambulance fa-3x" style="color: #f5576c;"></i>
+                            </div>
+                            <div class="mt-2">
+                                <span class="trend-down">↓ 5%</span> vs mese scorso
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="report-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="stat-label">Tempo Medio</p>
+                                    <span class="stat-number" id="avgTime">24</span> min
+                                </div>
+                                <i class="fas fa-clock fa-3x" style="color: #fa709a;"></i>
+                            </div>
+                            <div class="mt-2">
+                                <span class="trend-down">↓ 2 min</span> vs mese scorso
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts Row -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="report-card">
+                            <h5 class="mb-4"><i class="fas fa-chart-line me-2 text-primary"></i>Andamento Visite</h5>
+                            <canvas id="visitsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="report-card">
+                            <h5 class="mb-4"><i class="fas fa-chart-pie me-2 text-primary"></i>Distribuzione per Tipo</h5>
+                            <canvas id="distributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Second Row -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="report-card">
+                            <h5 class="mb-4"><i class="fas fa-tag me-2 text-primary"></i>Codici Triage</h5>
+                            <canvas id="triageChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="insight-box">
+                            <h5><i class="fas fa-lightbulb me-2"></i>AI Insights</h5>
+                            <div id="aiInsights">
+                                <p class="mb-2">• Aumento del 24% nelle televisite - trend positivo</p>
+                                <p class="mb-2">• Picco di accessi tra le 10:00 e le 12:00</p>
+                                <p class="mb-2">• 78% dei pazienti soddisfatti del servizio</p>
+                                <p class="mb-0">• Tempo di attesa medio ridotto di 5 minuti</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Top Diagnoses Table -->
+                <div class="report-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5><i class="fas fa-list me-2 text-primary"></i>Diagnosi più Frequenti</h5>
+                        <button class="export-btn" onclick="exportReport()">
+                            <i class="fas fa-download me-2"></i>Esporta Report
+                        </button>
+                    </div>
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th>Diagnosi</th>
+                                <th>Codice ICD-10</th>
+                                <th>Numero Casi</th>
+                                <th>Percentuale</th>
+                                <th>Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Ipertensione Essenziale</td>
+                                <td>I10</td>
+                                <td>342</td>
+                                <td>15.3%</td>
+                                <td><span class="trend-up">↑ 8%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Influenza</td>
+                                <td>J11.1</td>
+                                <td>287</td>
+                                <td>12.8%</td>
+                                <td><span class="trend-up">↑ 15%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Diabete Tipo 2</td>
+                                <td>E11</td>
+                                <td>198</td>
+                                <td>8.9%</td>
+                                <td><span class="trend-up">↑ 5%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Bronchite Acuta</td>
+                                <td>J20.9</td>
+                                <td>156</td>
+                                <td>7.0%</td>
+                                <td><span class="trend-down">↓ 3%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Scompenso Cardiaco</td>
+                                <td>I50.9</td>
+                                <td>98</td>
+                                <td>4.4%</td>
+                                <td><span class="trend-up">↑ 2%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Performance Metrics -->
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="report-card">
+                            <h6 class="mb-3">Performance Medici</h6>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Dr. Rossi</span>
+                                    <span>98% <small class="text-muted">(245 visite)</small></span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: 98%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Dr. Verdi</span>
+                                    <span>92% <small class="text-muted">(189 visite)</small></span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: 92%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Dr. Bianchi</span>
+                                    <span>88% <small class="text-muted">(156 visite)</small></span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" style="width: 88%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="report-card">
+                            <h6 class="mb-3">Soddisfazione Pazienti</h6>
+                            <div class="text-center mb-3">
+                                <span class="stat-number">4.5</span>/5
+                                <div class="text-warning">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <small class="text-muted">Basato su 342 recensioni</small>
+                            </div>
+                            <div class="metric-badge text-center">
+                                <i class="fas fa-smile me-2"></i>92% raccomanderebbe
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="report-card">
+                            <h6 class="mb-3">Tempi di Attesa Medi</h6>
+                            <canvas id="waitTimesChart" height="150"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let visitsChart, distributionChart, triageChart, waitTimesChart;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+        });
+        
+        function initCharts() {
+            // Visits Trend Chart
+            const visitsCtx = document.getElementById('visitsChart').getContext('2d');
+            visitsChart = new Chart(visitsCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Sett 1', 'Sett 2', 'Sett 3', 'Sett 4', 'Sett 5', 'Sett 6'],
+                    datasets: [
+                        {
+                            label: 'Visite Totali',
+                            data: [180, 210, 195, 240, 225, 260],
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Televisite',
+                            data: [45, 60, 55, 80, 75, 95],
+                            borderColor: '#43e97b',
+                            backgroundColor: 'rgba(67, 233, 123, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Distribution Chart
+            const distCtx = document.getElementById('distributionChart').getContext('2d');
+            distributionChart = new Chart(distCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Televisite', 'Visite Ambulatoriali', 'Emergenze', 'Controlli'],
+                    datasets: [{
+                        data: [458, 589, 89, 111],
+                        backgroundColor: ['#43e97b', '#667eea', '#f5576c', '#fa709a']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Triage Chart
+            const triageCtx = document.getElementById('triageChart').getContext('2d');
+            triageChart = new Chart(triageCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Rosso', 'Giallo', 'Verde', 'Bianco'],
+                    datasets: [{
+                        label: 'Numero Casi',
+                        data: [45, 123, 456, 623],
+                        backgroundColor: ['#dc3545', '#ffc107', '#28a745', '#6c757d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Wait Times Chart
+            const waitCtx = document.getElementById('waitTimesChart').getContext('2d');
+            waitTimesChart = new Chart(waitCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'],
+                    datasets: [{
+                        label: 'Minuti',
+                        data: [28, 25, 26, 22, 24, 18],
+                        borderColor: '#f093fb',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        document.getElementById('dateRange').addEventListener('change', function(e) {
+            const days = e.target.value;
+            updateDataForPeriod(days);
+        });
+        
+        function updateDataForPeriod(days) {
+            // Simulate data update based on selected period
+            const multipliers = {
+                '7': 0.3,
+                '30': 1,
+                '90': 3,
+                '365': 12
+            };
+            
+            const multiplier = multipliers[days] || 1;
+            
+            document.getElementById('totalVisits').textContent = Math.round(1247 * multiplier);
+            document.getElementById('telemedicineVisits').textContent = Math.round(458 * multiplier);
+            document.getElementById('emergencies').textContent = Math.round(89 * multiplier);
+            document.getElementById('avgTime').textContent = days === '7' ? '22' : 
+                                                             days === '30' ? '24' : 
+                                                             days === '90' ? '26' : '28';
+            
+            // Update insights based on period
+            const insights = {
+                '7': [
+                    '• Questa settimana: +15% televisite rispetto alla media',
+                    '• Picco di accessi oggi tra le 11:00-13:00',
+                    '• 92% dei pazienti soddisfatti',
+                    '• Tempo medio: 22 minuti (-2 min)'
+                ],
+                '30': [
+                    '• Aumento del 24% nelle televisite - trend positivo',
+                    '• Picco di accessi tra le 10:00 e le 12:00',
+                    '• 78% dei pazienti soddisfatti del servizio',
+                    '• Tempo di attesa medio ridotto di 5 minuti'
+                ],
+                '90': [
+                    '• Trend in crescita: +32% visite totali',
+                    '• Stagione influenzale: +45% codici verdi',
+                    '• Soddisfazione stabile al 85%',
+                    '• Efficienza migliorata del 12%'
+                ],
+                '365': [
+                    '• Crescita annuale: +28%',
+                    '• Telemedicina: +156% su base annua',
+                    '• Riduzione emergenze: -8%',
+                    '• ROI positivo: +23% efficienza'
+                ]
+            };
+            
+            const aiInsights = document.getElementById('aiInsights');
+            aiInsights.innerHTML = insights[days].map(i => `<p class="mb-2">${i}</p>`).join('');
+        }
+        
+        function exportReport() {
+            const period = document.getElementById('dateRange').selectedOptions[0].text;
+            alert(`Esportazione report per: ${period}\nIl file verrà scaricato in formato PDF.`);
+            
+            // In production: generate actual PDF
+            // window.open(`/api/reports/export?period=${document.getElementById('dateRange').value}`);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOU Marche - Dashboard Medico</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #0066cc;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid white;
+        }
+        
+        .main-content {
+            padding: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+        }
+        
+        .patient-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s;
+        }
+        
+        .patient-card.triage-red {
+            border-left-color: #dc3545;
+            background: linear-gradient(to right, #fff, #fff5f5);
+        }
+        
+        .patient-card.triage-yellow {
+            border-left-color: #ffc107;
+            background: linear-gradient(to right, #fff, #fff9e6);
+        }
+        
+        .patient-card.triage-green {
+            border-left-color: #28a745;
+        }
+        
+        .patient-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .vital-sign {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .vital-sign i {
+            color: var(--primary-color);
+            margin-right: 0.25rem;
+        }
+        
+        .emergency-badge {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        .video-call-container {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 1rem;
+            min-height: 300px;
+        }
+        
+        .chat-message {
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 5px;
+        }
+        
+        .chat-message.doctor {
+            background: var(--primary-color);
+            color: white;
+            margin-left: 20%;
+        }
+        
+        .chat-message.patient {
+            background: #f8f9fa;
+            margin-right: 20%;
+        }
+        
+        .alert-card {
+            border-left: 4px solid var(--warning-color);
+            background: #fff3cd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-join-call {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            transition: all 0.3s;
+        }
+        
+        .btn-join-call:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 p-0 sidebar">
+                <div class="p-4">
+                    <h4 class="text-white mb-4">
+                        <i class="fas fa-hospital me-2"></i>AOU Marche
+                    </h4>
+                    <p class="text-white-50 small">Dr. Mario Rossi</p>
+                    <p class="text-white-50 small mb-4">Cardiologia - Lancisi</p>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="#dashboard" onclick="showSection('dashboard')">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a class="nav-link" href="#patients" onclick="showSection('patients')">
+                        <i class="fas fa-users me-2"></i>Pazienti
+                    </a>
+                    <a class="nav-link" href="#visits" onclick="showSection('visits')">
+                        <i class="fas fa-calendar-check me-2"></i>Visite
+                    </a>
+                    <a class="nav-link" href="#telemonitoring" onclick="showSection('telemonitoring')">
+                        <i class="fas fa-heartbeat me-2"></i>Telemonitoraggio
+                    </a>
+                    <a class="nav-link" href="#emergency" onclick="showSection('emergency')">
+                        <i class="fas fa-ambulance me-2"></i>Emergenze
+                        <span class="badge bg-danger ms-2" id="emergencyCount">3</span>
+                    </a>
+                    <a class="nav-link" href="#reports" onclick="showSection('reports')">
+                        <i class="fas fa-chart-bar me-2"></i>Report
+                    </a>
+                    <a class="nav-link" href="#settings">
+                        <i class="fas fa-cog me-2"></i>Impostazioni
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>
+                        <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                        Dashboard
+                    </h2>
+                    <div>
+                        <span class="badge bg-success me-2">
+                            <i class="fas fa-circle"></i> Connesso
+                        </span>
+                        <span class="badge bg-warning" id="liveIndicator">
+                            <i class="fas fa-video"></i> Live
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Emergency Alert (shown when needed) -->
+                <div class="alert alert-danger emergency-badge" id="emergencyAlert" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>CODICE ROSSO</strong> - Nuova emergenza in arrivo!
+                    <button class="btn btn-light btn-sm float-end" onclick="viewEmergency()">
+                        Visualizza
+                    </button>
+                </div>
+                
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-muted mb-1">Pazienti attivi</p>
+                                    <h3 id="activePatients">0</h3>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-muted mb-1">Visite oggi</p>
+                                    <h3 id="todayVisits">0</h3>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-muted mb-1">Codice Rosso</p>
+                                    <h3 id="redCodeCount">0</h3>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-muted mb-1">Tempo medio risposta</p>
+                                    <h3 id="avgResponseTime">0</h3>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Row: Patient List + Video Call -->
+                <div class="row">
+                    <!-- Patient List -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-list me-2 text-primary"></i>
+                                    Pazienti in attesa
+                                </h5>
+                            </div>
+                            <div class="card-body" style="max-height: 500px; overflow-y: auto;" id="patientList">
+                                <!-- Dynamic patient list will be loaded here -->
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                                    <p>Caricamento pazienti...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Call Area -->
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-video me-2 text-primary"></i>
+                                        Televisita in corso
+                                    </h5>
+                                    <div>
+                                        <span class="badge bg-success me-2" id="callStatus">In attesa</span>
+                                        <button class="btn btn-danger btn-sm" onclick="endCall()">
+                                            <i class="fas fa-phone-slash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="video-call-container" id="videoContainer">
+                                    <!-- Local video -->
+                                    <video id="localVideo" autoplay muted style="width: 100%; height: 300px; background: #000;"></video>
+                                    
+                                    <!-- Remote video (will be overlaid for PiP) -->
+                                    <video id="remoteVideo" autoplay style="width: 200px; height: 150px; position: absolute; bottom: 20px; right: 20px; border-radius: 10px; border: 3px solid white;"></video>
+                                    
+                                    <!-- Call controls -->
+                                    <div class="mt-2 text-center">
+                                        <button class="btn btn-outline-light btn-sm" onclick="toggleMute()">
+                                            <i class="fas fa-microphone"></i>
+                                        </button>
+                                        <button class="btn btn-outline-light btn-sm" onclick="toggleVideo()">
+                                            <i class="fas fa-video"></i>
+                                        </button>
+                                        <button class="btn btn-outline-light btn-sm" onclick="toggleScreenShare()">
+                                            <i class="fas fa-desktop"></i>
+                                        </button>
+                                        <button class="btn btn-outline-light btn-sm" onclick="openChat()">
+                                            <i class="fas fa-comment"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Patient Info during call -->
+                                <div class="mt-3" id="activeCallInfo">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Paziente:</strong> <span id="activePatientName">-</span></p>
+                                            <p><strong>Motivo:</strong> <span id="activeReason">-</span></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Vitali:</strong></p>
+                                            <div id="activeVitals">
+                                                <span class="vital-sign"><i class="fas fa-heartbeat text-danger"></i> <span id="hrValue">--</span></span>
+                                                <span class="vital-sign"><i class="fas fa-heart text-primary"></i> <span id="bpValue">--/--</span></span>
+                                                <span class="vital-sign"><i class="fas fa-lungs text-info"></i> <span id="spo2Value">--%</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alerts Section -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-bell me-2 text-warning"></i>
+                                    Alert attivi
+                                </h5>
+                            </div>
+                            <div class="card-body" id="alertsList">
+                                <!-- Alerts will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Modal -->
+    <div class="modal fade" id="chatModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chat con paziente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="chatMessages" style="height: 300px; overflow-y: auto;"></div>
+                    <div class="input-group mt-3">
+                        <input type="text" class="form-control" id="chatInput" placeholder="Scrivi un messaggio...">
+                        <button class="btn btn-primary" onclick="sendChat()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        // WebSocket connection
+        let ws = null;
+        let currentPatientId = null;
+        let localStream = null;
+        let peerConnection = null;
+        let activeCall = false;
+        
+        // Initialize on page load
+        $(document).ready(function() {
+            connectWebSocket();
+            loadDashboardData();
+            initializeVideo();
+            
+            // Refresh every 30 seconds
+            setInterval(loadDashboardData, 30000);
+        });
+        
+        // WebSocket connection for real-time updates
+        function connectWebSocket() {
+            ws = new WebSocket('wss://api.aoumarche.it/ws/doctor/DR-CARDIO-001');
+            
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+                // Request initial patient list
+                ws.send(JSON.stringify({
+                    type: 'request_patient_list'
+                }));
+            };
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                setTimeout(connectWebSocket, 5000); // Reconnect after 5 seconds
+            };
+        }
+        
+        // Handle incoming WebSocket messages
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'patient_list':
+                    updatePatientList(data.data);
+                    break;
+                    
+                case 'patient_alert':
+                    showAlert(data.alert);
+                    updateEmergencyBadge();
+                    break;
+                    
+                case 'vitals_update':
+                    updateVitalSigns(data.patient_id, data.data);
+                    break;
+                    
+                case 'emergency_alert':
+                    showEmergencyAlert(data);
+                    break;
+            }
+        }
+        
+        // Load dashboard data via REST API
+        function loadDashboardData() {
+            $.ajax({
+                url: '/api/doctor/dashboard',
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                success: function(data) {
+                    updateStats(data.stats);
+                    updatePatientList(data.patients);
+                    updateAlerts(data.alerts);
+                },
+                error: function(error) {
+                    console.error('Error loading dashboard:', error);
+                }
+            });
+        }
+        
+        // Update statistics
+        function updateStats(stats) {
+            $('#activePatients').text(stats.active_patients || 0);
+            $('#todayVisits').text(stats.today_visits || 0);
+            $('#redCodeCount').text(stats.red_code_count || 0);
+            $('#avgResponseTime').text(stats.avg_response_time + ' min' || '0 min');
+        }
+        
+        // Update patient list
+        function updatePatientList(patients) {
+            if (!patients || patients.length === 0) {
+                $('#patientList').html(`
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-smile fa-2x mb-3"></i>
+                        <p>Nessun paziente in attesa</p>
+                    </div>
+                `);
+                return;
+            }
+            
+            let html = '';
+            patients.forEach(patient => {
+                const triageClass = patient.triage_level === 'CODICE_ROSSO' ? 'triage-red' :
+                                   patient.triage_level === 'CODICE_GIALLO' ? 'triage-yellow' : '';
+                
+                html += `
+                    <div class="patient-card ${triageClass}" onclick="selectPatient('${patient.id}')">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="mb-1">${patient.nome}</h6>
+                            ${patient.triage_level ? 
+                                `<span class="badge bg-${patient.triage_level === 'CODICE_ROSSO' ? 'danger' : 
+                                                                  patient.triage_level === 'CODICE_GIALLO' ? 'warning' : 'success'}">
+                                    ${patient.triage_level}
+                                </span>` : ''}
+                        </div>
+                        <p class="text-muted small mb-2">${patient.codice_fiscale}</p>
+                        
+                        <div class="mb-2">
+                            ${patient.latest_vitals ? `
+                                <span class="vital-sign">
+                                    <i class="fas fa-heartbeat text-danger"></i> ${patient.latest_vitals.data.heart_rate || '--'}
+                                </span>
+                                <span class="vital-sign">
+                                    <i class="fas fa-lungs text-info"></i> ${patient.latest_vitals.data.oxygen_saturation || '--'}%
+                                </span>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-primary" onclick="startCall('${patient.id}')">
+                                <i class="fas fa-video"></i> Avvia
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="viewPatient('${patient.id}')">
+                                <i class="fas fa-chart-line"></i> Storico
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            $('#patientList').html(html);
+        }
+        
+        // Update alerts
+        function updateAlerts(alerts) {
+            if (!alerts || alerts.length === 0) {
+                $('#alertsList').html('<p class="text-muted text-center py-2">Nessun alert attivo</p>');
+                return;
+            }
+            
+            let html = '';
+            alerts.forEach(alert => {
+                html += `
+                    <div class="alert-card">
+                        <div class="d-flex justify-content-between">
+                            <strong>${alert.type}</strong>
+                            <span class="badge bg-${alert.severity === 'critical' ? 'danger' : 'warning'}">${alert.severity}</span>
+                        </div>
+                        <p class="mb-1">${alert.message}</p>
+                        <small class="text-muted">Paziente: ${alert.patient_name}</small>
+                    </div>
+                `;
+            });
+            
+            $('#alertsList').html(html);
+        }
+        
+        // Initialize video call
+        async function initializeVideo() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                
+                const localVideo = document.getElementById('localVideo');
+                localVideo.srcObject = localStream;
+                
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                showNotification('Errore', 'Impossibile accedere alla fotocamera', 'error');
+            }
+        }
+        
+        // Start video call with patient
+        async function startCall(patientId) {
+            try {
+                // Get call information from server
+                const response = await $.ajax({
+                    url: `/api/televisita/start/${patientId}`,
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+                
+                activeCall = true;
+                currentPatientId = patientId;
+                
+                // Get patient info
+                const patient = response.patient;
+                $('#activePatientName').text(patient.nome);
+                $('#activeReason').text(response.reason || 'Visita cardiologica');
+                
+                // Update call status
+                $('#callStatus').text('In corso').removeClass('bg-success').addClass('bg-danger');
+                
+                // Initialize WebRTC peer connection
+                initializePeerConnection(response.session_id);
+                
+                showNotification('Chiamata avviata', 'Connessione con paziente in corso...', 'success');
+                
+            } catch (error) {
+                console.error('Error starting call:', error);
+                showNotification('Errore', 'Impossibile avviare la chiamata', 'error');
+            }
+        }
+        
+        // Initialize WebRTC peer connection
+        function initializePeerConnection(sessionId) {
+            const configuration = {
+                iceServers: [
+                    { urls: 'stun:stun.aoumarche.it:3478' },
+                    {
+                        urls: 'turn:turn.aoumarche.it:3478',
+                        username: 'doctor',
+                        credential: 'secure_password'
+                    }
+                ]
+            };
+            
+            peerConnection = new RTCPeerConnection(configuration);
+            
+            // Add local stream
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+            
+            // Handle remote stream
+            peerConnection.ontrack = function(event) {
+                const remoteVideo = document.getElementById('remoteVideo');
+                remoteVideo.srcObject = event.streams[0];
+            };
+            
+            // Handle ICE candidates
+            peerConnection.onicecandidate = function(event) {
+                if (event.candidate) {
+                    // Send candidate to signaling server
+                    ws.send(JSON.stringify({
+                        type: 'ice_candidate',
+                        session_id: sessionId,
+                        candidate: event.candidate
+                    }));
+                }
+            };
+            
+            // Create and send offer
+            peerConnection.createOffer()
+                .then(offer => peerConnection.setLocalDescription(offer))
+                .then(() => {
+                    ws.send(JSON.stringify({
+                        type: 'offer',
+                        session_id: sessionId,
+                        offer: peerConnection.localDescription
+                    }));
+                });
+        }
+        
+        // End current call
+        function endCall() {
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            
+            activeCall = false;
+            currentPatientId = null;
+            
+            $('#callStatus').text('Terminata').removeClass('bg-danger').addClass('bg-secondary');
+            $('#activePatientName').text('-');
+            
+            showNotification('Chiamata terminata', 'La televisita è stata conclusa', 'info');
+        }
+        
+        // Toggle microphone
+        function toggleMute() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                audioTrack.enabled = !audioTrack.enabled;
+                
+                const icon = document.querySelector('.btn-outline-light i.fa-microphone');
+                if (audioTrack.enabled) {
+                    icon.className = 'fas fa-microphone';
+                } else {
+                    icon.className = 'fas fa-microphone-slash';
+                }
+            }
+        }
+        
+        // Toggle video
+        function toggleVideo() {
+            if (localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                videoTrack.enabled = !videoTrack.enabled;
+                
+                const icon = document.querySelector('.btn-outline-light i.fa-video');
+                if (videoTrack.enabled) {
+                    icon.className = 'fas fa-video';
+                } else {
+                    icon.className = 'fas fa-video-slash';
+                }
+            }
+        }
+        
+        // Toggle screen share
+        async function toggleScreenShare() {
+            try {
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({ 
+                    video: true 
+                });
+                
+                const screenTrack = screenStream.getVideoTracks()[0];
+                
+                // Replace video track with screen share
+                const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
+                sender.replaceTrack(screenTrack);
+                
+                screenTrack.onended = () => {
+                    // Restore camera when screen share ends
+                    const cameraTrack = localStream.getVideoTracks()[0];
+                    sender.replaceTrack(cameraTrack);
+                };
+                
+            } catch (error) {
+                console.error('Error sharing screen:', error);
+            }
+        }
+        
+        // Open chat modal
+        function openChat() {
+            if (!currentPatientId) {
+                showNotification('Nessuna chiamata attiva', 'Avvia una televisita prima di aprire la chat', 'warning');
+                return;
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('chatModal'));
+            modal.show();
+        }
+        
+        // Send chat message
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message || !currentPatientId) return;
+            
+            // Add message to chat
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML += `
+                <div class="chat-message doctor">
+                    <strong>Tu:</strong> ${message}
+                    <small class="d-block text-white-50">${new Date().toLocaleTimeString()}</small>
+                </div>
+            `;
+            
+            // Send via WebSocket
+            ws.send(JSON.stringify({
+                type: 'chat_message',
+                patient_id: currentPatientId,
+                message: message
+            }));
+            
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Update vital signs in UI
+        function updateVitalSigns(patientId, vitals) {
+            if (patientId === currentPatientId) {
+                $('#hrValue').text(vitals.heart_rate || '--');
+                $('#bpValue').text(
+                    (vitals.blood_pressure?.systolic || '--') + '/' + 
+                    (vitals.blood_pressure?.diastolic || '--')
+                );
+                $('#spo2Value').text((vitals.oxygen_saturation || '--') + '%');
+            }
+        }
+        
+        // Show emergency alert
+        function showEmergencyAlert(data) {
+            $('#emergencyAlert').show();
+            $('#emergencyCount').text(parseInt($('#emergencyCount').text()) + 1);
+            
+            // Play alert sound
+            const audio = new Audio('/sounds/emergency.mp3');
+            audio.play();
+        }
+        
+        // Show notification
+        function showNotification(title, message, type = 'info') {
+            // Simple alert for demo
+            // In production: use toast notifications
+            console.log(`${type}: ${title} - ${message}`);
+        }
+        
+        // Update emergency badge
+        function updateEmergencyBadge() {
+            const count = parseInt($('#emergencyCount').text());
+            $('#emergencyCount').text(count + 1);
+        }
+        
+        // View emergency details
+        function viewEmergency() {
+            $('#emergencyAlert').hide();
+            showSection('emergency');
+        }
+        
+        // Select patient from list
+        function selectPatient(patientId) {
+            // Highlight selected patient
+            $('.patient-card').removeClass('border-primary');
+            $(event.currentTarget).addClass('border-primary');
+        }
+        
+        // View patient history
+        function viewPatient(patientId) {
+            window.location.href = `/patient/${patientId}`;
+        }
+        
+        // Show different sections
+        function showSection(section) {
+            $('.nav-link').removeClass('active');
+            $(`.nav-link[href="#${section}"]`).addClass('active');
+            
+            // In production: load section content via AJAX
+            console.log('Switching to section:', section);
+        }
+        
+        // Clean up on page unload
+        window.onbeforeunload = function() {
+            if (ws) {
+                ws.close();
+            }
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+        };
+    </script>
+</body>
+</html>

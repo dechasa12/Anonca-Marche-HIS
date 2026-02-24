@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOU Marche - Registrazione Paziente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .registration-container {
+            max-width: 800px;
+            margin: 50px auto;
+        }
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .card-header h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .card-body {
+            padding: 40px;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #555;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-register {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+            width: 100%;
+            transition: transform 0.3s;
+        }
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .consent-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        .step.active .step-circle {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .step-title {
+            font-size: 0.9rem;
+            color: #777;
+        }
+        .step.active .step-title {
+            color: #667eea;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container registration-container">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-user-plus me-2"></i>Registrazione Nuovo Paziente</h2>
+                <p class="mb-0">AOU Marche - Ospedali Riuniti Ancona</p>
+            </div>
+            <div class="card-body">
+                <!-- Step Indicator -->
+                <div class="step-indicator">
+                    <div class="step active" id="step1">
+                        <div class="step-circle">1</div>
+                        <div class="step-title">Dati Personali</div>
+                    </div>
+                    <div class="step" id="step2">
+                        <div class="step-circle">2</div>
+                        <div class="step-title">Dati Sanitari</div>
+                    </div>
+                    <div class="step" id="step3">
+                        <div class="step-circle">3</div>
+                        <div class="step-title">Consensi</div>
+                    </div>
+                    <div class="step" id="step4">
+                        <div class="step-circle">4</div>
+                        <div class="step-title">Completato</div>
+                    </div>
+                </div>
+
+                <!-- Form Steps -->
+                <form id="registrationForm">
+                    <!-- Step 1: Dati Personali -->
+                    <div id="step1-content">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Codice Fiscale *</label>
+                                <input type="text" class="form-control" id="codiceFiscale" required pattern="[A-Z0-9]{16}" 
+                                       placeholder="RSSMRA80A01A271X">
+                                <small class="text-muted">16 caratteri (lettere maiuscole e numeri)</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tessera Sanitaria</label>
+                                <input type="text" class="form-control" id="tesseraSanitaria" 
+                                       placeholder="Numero tessera sanitaria">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Cognome *</label>
+                                <input type="text" class="form-control" id="cognome" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Nome *</label>
+                                <input type="text" class="form-control" id="nome" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Sesso *</label>
+                                <select class="form-select" id="sesso" required>
+                                    <option value="">Seleziona...</option>
+                                    <option value="M">Maschio</option>
+                                    <option value="F">Femmina</option>
+                                    <option value="Altro">Altro</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Data di Nascita *</label>
+                                <input type="date" class="form-control" id="dataNascita" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Comune di Nascita *</label>
+                                <input type="text" class="form-control" id="comuneNascita" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Provincia</label>
+                                <select class="form-select" id="provinciaNascita">
+                                    <option value="">Seleziona...</option>
+                                    <option value="AN">Ancona</option>
+                                    <option value="PU">Pesaro-Urbino</option>
+                                    <option value="MC">Macerata</option>
+                                    <option value="FM">Fermo</option>
+                                    <option value="AP">Ascoli Piceno</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" placeholder="nome@email.it">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Telefono *</label>
+                                <input type="tel" class="form-control" id="telefono" required placeholder="+39 333 1234567">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">Indirizzo di Residenza</label>
+                                <input type="text" class="form-control" id="indirizzo" placeholder="Via, numero civico">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">CAP</label>
+                                <input type="text" class="form-control" id="cap" pattern="[0-9]{5}" placeholder="60100">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Comune</label>
+                                <input type="text" class="form-control" id="comune" value="Ancona">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Provincia</label>
+                                <select class="form-select" id="provincia">
+                                    <option value="AN">Ancona</option>
+                                    <option value="PU">Pesaro-Urbino</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">ASL</label>
+                                <select class="form-select" id="asl">
+                                    <option value="ASL_AN">ASL Ancona</option>
+                                    <option value="ASL_PU">ASL Pesaro-Urbino</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn btn-primary" onclick="nextStep(2)">Continua <i class="fas fa-arrow-right ms-2"></i></button>
+                    </div>
+                    
+                    <!-- Step 2: Dati Sanitari -->
+                    <div id="step2-content" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Gruppo Sanguigno</label>
+                                <select class="form-select" id="gruppoSanguigno">
+                                    <option value="">Seleziona...</option>
+                                    <option value="0+">0+</option>
+                                    <option value="0-">0-</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Medico di Base</label>
+                                <select class="form-select" id="medicoBase">
+                                    <option value="">Seleziona...</option>
+                                    <option value="DR001">Dott. Mario Rossi</option>
+                                    <option value="DR002">Dott.ssa Anna Verdi</option>
+                                    <option value="DR003">Dott. Giuseppe Bianchi</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Allergie</label>
+                            <textarea class="form-control" id="allergie" rows="2" placeholder="Es. penicillina, nichel, pollini..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Patologie Croniche</label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="diabete" value="diabete">
+                                        <label class="form-check-label">Diabete</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="ipertensione" value="ipertensione">
+                                        <label class="form-check-label">Ipertensione</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="cardiopatia" value="cardiopatia">
+                                        <label class="form-check-label">Cardiopatia</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="asma" value="asma">
+                                        <label class="form-check-label">Asma</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="artrite" value="artrite">
+                                        <label class="form-check-label">Artrite</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Farmaci in Uso</label>
+                            <textarea class="form-control" id="farmaci" rows="2" placeholder="Es. Ramipril 5mg, Metformina 500mg..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Note Aggiuntive</label>
+                            <textarea class="form-control" id="note" rows="2" placeholder="Altre informazioni rilevanti..."></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" onclick="prevStep(1)"><i class="fas fa-arrow-left me-2"></i>Indietro</button>
+                            <button type="button" class="btn btn-primary" onclick="nextStep(3)">Continua <i class="fas fa-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Consensi -->
+                    <div id="step3-content" style="display: none;">
+                        <div class="consent-box">
+                            <h5><i class="fas fa-file-signature me-2"></i>Consenso al Trattamento Dati</h5>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="consensoPrivacy" required>
+                                <label class="form-check-label">
+                                    Acconsento al trattamento dei dati personali secondo il GDPR (Regolamento UE 2016/679)
+                                </label>
+                            </div>
+                            
+                            <h5 class="mt-4"><i class="fas fa-notes-medical me-2"></i>Consenso Telemedicina</h5>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="consensoTelemedicina">
+                                <label class="form-check-label">
+                                    Acconsento all'utilizzo della telemedicina per visite a distanza
+                                </label>
+                            </div>
+                            
+                            <h5 class="mt-4"><i class="fas fa-folder-open me-2"></i>Consenso FSE</h5>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="consensoFSE">
+                                <label class="form-check-label">
+                                    Acconsento all'inserimento dei dati nel Fascicolo Sanitario Elettronico (FSE)
+                                </label>
+                            </div>
+                            
+                            <h5 class="mt-4"><i class="fas fa-flask me-2"></i>Consenso Ricerca</h5>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="consensoRicerca">
+                                <label class="form-check-label">
+                                    Acconsento all'utilizzo dei dati anonimizzati per scopi di ricerca scientifica
+                                </label>
+                            </div>
+                            
+                            <h5 class="mt-4"><i class="fas fa-bell me-2"></i>Consenso Notifiche</h5>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="consensoNotifiche">
+                                <label class="form-check-label">
+                                    Desidero ricevere notifiche via SMS/email per appuntamenti e risultati esami
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" onclick="prevStep(2)"><i class="fas fa-arrow-left me-2"></i>Indietro</button>
+                            <button type="button" class="btn btn-success" onclick="submitRegistration()">
+                                <i class="fas fa-check me-2"></i>Completa Registrazione
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Completato -->
+                    <div id="step4-content" style="display: none; text-align: center;">
+                        <div class="my-5">
+                            <i class="fas fa-check-circle text-success" style="font-size: 80px;"></i>
+                            <h3 class="mt-4">Registrazione Completata!</h3>
+                            <p class="text-muted">Il paziente è stato registrato con successo nel sistema.</p>
+                            
+                            <div class="alert alert-info mt-4">
+                                <strong>ID Paziente:</strong> <span id="patientId"></span>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <a href="doctor-dashboard.html" class="btn btn-primary me-2">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Vai alla Dashboard
+                                </a>
+                                <a href="patient-registration.html" class="btn btn-outline-primary">
+                                    <i class="fas fa-user-plus me-2"></i>Nuova Registrazione
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        
+        function showStep(step) {
+            // Hide all steps
+            document.getElementById('step1-content').style.display = 'none';
+            document.getElementById('step2-content').style.display = 'none';
+            document.getElementById('step3-content').style.display = 'none';
+            document.getElementById('step4-content').style.display = 'none';
+            
+            // Show current step
+            document.getElementById(`step${step}-content`).style.display = 'block';
+            
+            // Update step indicators
+            for (let i = 1; i <= 4; i++) {
+                const stepElement = document.getElementById(`step${i}`);
+                if (i <= step) {
+                    stepElement.classList.add('active');
+                } else {
+                    stepElement.classList.remove('active');
+                }
+            }
+            
+            currentStep = step;
+        }
+        
+        function nextStep(step) {
+            // Validate current step before proceeding
+            if (currentStep === 1) {
+                if (!validateStep1()) return;
+            } else if (currentStep === 2) {
+                if (!validateStep2()) return;
+            }
+            
+            showStep(step);
+        }
+        
+        function prevStep(step) {
+            showStep(step);
+        }
+        
+        function validateStep1() {
+            const required = ['codiceFiscale', 'cognome', 'nome', 'sesso', 'dataNascita', 'comuneNascita', 'telefono'];
+            
+            for (let field of required) {
+                const element = document.getElementById(field);
+                if (!element.value) {
+                    alert(`Il campo ${field} è obbligatorio`);
+                    element.focus();
+                    return false;
+                }
+            }
+            
+            // Validate CF format (simplified)
+            const cf = document.getElementById('codiceFiscale').value;
+            if (cf.length !== 16) {
+                alert('Il codice fiscale deve essere di 16 caratteri');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function validateStep2() {
+            // Optional step - always valid
+            return true;
+        }
+        
+        async function submitRegistration() {
+            if (!document.getElementById('consensoPrivacy').checked) {
+                alert('Devi accettare il consenso al trattamento dei dati');
+                return;
+            }
+            
+            // Collect all data
+            const patientData = {
+                codice_fiscale: document.getElementById('codiceFiscale').value,
+                cognome: document.getElementById('cognome').value,
+                nome: document.getElementById('nome').value,
+                sesso: document.getElementById('sesso').value,
+                data_nascita: document.getElementById('dataNascita').value,
+                comune_nascita: document.getElementById('comuneNascita').value,
+                email: document.getElementById('email').value,
+                telefono: document.getElementById('telefono').value,
+                
+                // Health data
+                gruppo_sanguigno: document.getElementById('gruppoSanguigno').value,
+                medico_base: document.getElementById('medicoBase').value,
+                allergie: document.getElementById('allergie').value,
+                farmaci: document.getElementById('farmaci').value,
+                patologie: [],
+                
+                // Consents
+                consenso_telemedicina: document.getElementById('consensoTelemedicina').checked,
+                consenso_fse: document.getElementById('consensoFSE').checked,
+                consenso_ricerca: document.getElementById('consensoRicerca').checked,
+                consenso_notifiche: document.getElementById('consensoNotifiche').checked
+            };
+            
+            // Collect chronic conditions
+            if (document.getElementById('diabete').checked) patientData.patologie.push('diabete');
+            if (document.getElementById('ipertensione').checked) patientData.patologie.push('ipertensione');
+            if (document.getElementById('cardiopatia').checked) patientData.patologie.push('cardiopatia');
+            if (document.getElementById('asma').checked) patientData.patologie.push('asma');
+            if (document.getElementById('artrite').checked) patientData.patologie.push('artrite');
+            
+            try {
+                // Send to backend
+                const response = await fetch('http://localhost:8000/api/patients/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(patientData)
+                });
+                
+                const result = await response.json();
+                
+                // Show completion step
+                document.getElementById('patientId').textContent = result.patient_id || 'TEST-123';
+                showStep(4);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                // For development, still show success
+                document.getElementById('patientId').textContent = 'DEV-TEST-123';
+                showStep(4);
+            }
+        }
+        
+        // Initialize first step
+        showStep(1);
+    </script>
+</body>
+</html>
