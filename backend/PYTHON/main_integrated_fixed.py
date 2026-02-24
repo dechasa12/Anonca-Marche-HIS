@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from typing import List, Optional
@@ -60,6 +60,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files (if you want to serve CSS/JS separately)
+static_dir = os.path.abspath("frontend/web")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    print(f"✅ Static files mounted from {static_dir}")
 
 # Initialize services
 telemedicine = TelemedicineService()
@@ -224,6 +230,21 @@ async def get_dashboard_stats(
         "timestamp": datetime.datetime.now().isoformat()
     }
 
+@app.get("/api/dashboard/recent-patients")
+async def get_recent_patients(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get recently active patients"""
+    recent = db.query(Patient).order_by(Patient.created_at.desc()).limit(10).all()
+    
+    return [{
+        "id": p.id,
+        "name": f"{p.cognome} {p.nome}",
+        "codice_fiscale": p.codice_fiscale,
+        "last_visit": p.last_visit.isoformat() if p.last_visit else None
+    } for p in recent]
+
 # ============================================================================
 # HEALTH CHECK
 # ============================================================================
@@ -245,17 +266,38 @@ async def health_check(db: Session = Depends(get_db)):
     }
 
 # ============================================================================
-# FRONTEND PAGES
+# FRONTEND PAGES - FIXED TO SERVE THE CORRECT FILE
 # ============================================================================
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     """Serve the main dashboard"""
     dashboard_path = os.path.abspath("frontend/web/doctor-dashboard.html")
+    print(f"Looking for dashboard at: {dashboard_path}")
+    
     if os.path.exists(dashboard_path):
-        with open(dashboard_path, "r") as f:
-            return f.read()
-    return HTMLResponse(content=f"<h1>Dashboard not found</h1>")
+        print(f"✅ Found dashboard at {dashboard_path}")
+        with open(dashboard_path, "r", encoding='utf-8') as f:
+            content = f.read()
+        return HTMLResponse(content=content)
+    else:
+        print(f"❌ Dashboard not found at {dashboard_path}")
+        return HTMLResponse(content=f"""
+        <html>
+            <head><title>AOU Marche HIS</title></head>
+            <body style="font-family: Arial; padding: 40px;">
+                <h1>🏥 AOU Marche HIS</h1>
+                <p>Dashboard non trovata. Verifica che il file esista in:</p>
+                <code>{dashboard_path}</code>
+                <h2 style="margin-top: 30px;">API Endpoints:</h2>
+                <ul>
+                    <li><a href="/docs">Documentazione API</a></li>
+                    <li><a href="/health">Health Check</a></li>
+                    <li><a href="/api/auth/me">User Info (richiede token)</a></li>
+                </ul>
+            </body>
+        </html>
+        """)
 
 # ============================================================================
 # MAIN ENTRY POINT
@@ -268,6 +310,8 @@ if __name__ == "__main__":
     print("\n📡 Starting server...")
     print("   API: http://localhost:8000")
     print("   Docs: http://localhost:8000/docs")
+    print("   Health: http://localhost:8000/health")
+    print("   Dashboard: http://localhost:8000")
     print("\n📊 Database: PostgreSQL")
     print("   Database: aoumarche")
     print("\n🔐 Authentication:")
@@ -275,6 +319,32 @@ if __name__ == "__main__":
     print("   Doctor:   dott.rossi@aoumarche.it / Medico@2024")
     print("   Nurse:    infermiere.bianchi@aoumarche.it / Infermiere@2024")
     print("\n" + "=" * 60)
+    
+    # Check if dashboard exists
+    dashboard_check = os.path.abspath("frontend/web/doctor-dashboard.html")
+    if os.path.exists(dashboard_check):
+        print(f"✅ Dashboard file found at: {dashboard_check}")
+    else:
+        print(f"⚠️ Dashboard file not found at: {dashboard_check}")
+        print("   Creating a basic dashboard for you...")
+        
+        # Create basic dashboard if it doesn't exist
+        os.makedirs("frontend/web", exist_ok=True)
+        basic_dashboard = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AOU Marche HIS</title>
+</head>
+<body>
+    <h1>🏥 AOU Marche HIS</h1>
+    <p>Basic dashboard. Please create frontend/web/doctor-dashboard.html</p>
+</body>
+</html>
+"""
+        with open(dashboard_check, "w") as f:
+            f.write(basic_dashboard)
+        print("✅ Basic dashboard created")
     
     uvicorn.run(
         "main_integrated_fixed:app",
